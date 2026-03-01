@@ -1,8 +1,25 @@
-import { Controller, Get, Post, Patch, Body, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { MatchService } from './match.service';
 import { CreateMatchDto } from './dto/create.match.dto';
 import { UpdateMatchDto } from './dto/update-match.dto';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('matches')
 @Controller('matches')
@@ -10,6 +27,8 @@ export class MatchController {
   constructor(private matchService: MatchService) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all matches' })
   @ApiResponse({ status: 200, description: 'Returns all matches' })
   async getAllMatches() {
@@ -17,6 +36,9 @@ export class MatchController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new match' })
   @ApiResponse({ status: 201, description: 'Match created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -25,6 +47,9 @@ export class MatchController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update match status or winner' })
   @ApiParam({ name: 'id', description: 'Match ID' })
   @ApiResponse({ status: 200, description: 'Match updated successfully' })

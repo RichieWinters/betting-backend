@@ -22,4 +22,18 @@ export class UserService {
       },
     });
   }
+
+  async banUser(id: number) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { isBanned: true },
+    });
+  }
+
+  async unbanUser(id: number) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { isBanned: false },
+    });
+  }
 }

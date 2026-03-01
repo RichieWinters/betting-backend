@@ -15,6 +15,25 @@ export class BetService {
     });
   }
 
+  async findUserBets(userId: number) {
+    return this.prisma.bet.findMany({
+      where: { userId },
+      include: {
+        match: {
+          select: {
+            id: true,
+            teamA: true,
+            teamB: true,
+            status: true,
+            winner: true,
+            date: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async create(createBetDto: CreateBetDto) {
     const user = await this.prisma.user.findUnique({
       where: { id: createBetDto.userId },

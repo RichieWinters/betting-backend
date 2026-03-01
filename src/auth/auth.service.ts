@@ -10,12 +10,14 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private emailService: EmailService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -104,7 +106,7 @@ export class AuthService {
       data: { resetToken, resetTokenExpiry },
     });
 
-    console.log(`Reset token: ${resetToken}`);
+    await this.emailService.sendPasswordResetEmail(user.email, resetToken);
     return { message: 'If email exists, reset link will be sent' };
   }
 
