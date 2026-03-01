@@ -22,9 +22,11 @@ async function bootstrap() {
     .setTitle('Betting API')
     .setDescription('Cyber-sports betting platform API')
     .setVersion('1.0')
+    .addTag('auth', 'Authentication')
     .addTag('users', 'User management')
     .addTag('matches', 'Match management')
     .addTag('bets', 'Betting operations')
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
