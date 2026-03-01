@@ -11,6 +11,8 @@ describe('UserService', () => {
       id: 1,
       name: 'Michael',
       balance: 1000,
+      email: 'michael@meandmichael.com',
+      password: 'password123',
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -18,6 +20,8 @@ describe('UserService', () => {
       id: 2,
       name: 'Bob',
       balance: 500,
+      email: 'bob@bob.com',
+      password: 'password12345',
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -51,29 +55,58 @@ describe('UserService', () => {
 
   describe('create', () => {
     it('should use provided balance', async () => {
-      const createUserDto = { name: 'Alice', balance: 500 };
+      const createUserDto = {
+        name: 'Alice',
+        balance: 500,
+        email: 'alice@alice.com',
+        password: 'password123',
+      };
       await service.create(createUserDto);
 
       expect(prisma.user.create).toHaveBeenCalledWith({
-        data: { name: 'Alice', balance: 500 },
+        data: {
+          name: 'Alice',
+          balance: 500,
+          email: 'alice@alice.com',
+          password: 'password123',
+        },
       });
     });
 
     it('should use default balance (1000) when not provided', async () => {
-      const createUserDto = { name: 'Bob' };
+      const createUserDto = {
+        name: 'Bob',
+        email: 'bob@bob.com',
+        password: 'password12345',
+      };
       await service.create(createUserDto);
 
       expect(prisma.user.create).toHaveBeenCalledWith({
-        data: { name: 'Bob', balance: 1000 },
+        data: {
+          name: 'Bob',
+          balance: 1000,
+          email: 'bob@bob.com',
+          password: 'password12345',
+        },
       });
     });
 
     it('should use default balance (1000) when balance is undefined', async () => {
-      const createUserDto = { name: 'Charlie', balance: undefined };
+      const createUserDto = {
+        name: 'Charlie',
+        balance: undefined,
+        email: 'charlie@charlie.com',
+        password: 'password123456',
+      };
       await service.create(createUserDto);
 
       expect(prisma.user.create).toHaveBeenCalledWith({
-        data: { name: 'Charlie', balance: 1000 },
+        data: {
+          name: 'Charlie',
+          balance: 1000,
+          email: 'charlie@charlie.com',
+          password: 'password123456',
+        },
       });
     });
   });

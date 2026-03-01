@@ -11,11 +11,24 @@ enum SportType {
   FORTNITE
 }
 
+enum Role {
+  ADMIN
+  USER
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  balance   Float    @default(1000.00)
-  bets      Bet[]
+  id       Int     @id @default(autoincrement())
+  name     String
+  email    String  @unique
+  password String
+  role     Role    @default(USER)
+  isBanned Boolean @default(false)
+  balance  Float   @default(1000.00)
+  bets     Bet[]
+
+  resetToken       String?
+  resetTokenExpiry DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

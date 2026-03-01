@@ -46,7 +46,12 @@ describe('Betting Flow (e2e)', () => {
   it('should create a user', async () => {
     const response = await request(app.getHttpServer())
       .post('/users')
-      .send({ name: 'Gambler', balance: 1000 })
+      .send({
+        name: 'Gambler',
+        balance: 1000,
+        email: 'gambler@test.com',
+        password: 'password123',
+      })
       .expect(201);
 
     userId = response.body.id;

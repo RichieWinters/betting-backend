@@ -5,9 +5,10 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
 import { MatchModule } from './match/match.module';
 import { BetModule } from './bet/bet.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [PrismaModule, UserModule, MatchModule, BetModule],
+  imports: [PrismaModule, UserModule, MatchModule, BetModule, AuthModule],
   controllers: [AppController],
   providers: [AppService],
 })

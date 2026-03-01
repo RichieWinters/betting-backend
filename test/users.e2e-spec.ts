@@ -51,29 +51,42 @@ describe('Users (e2e)', () => {
     it('should create a new user', () => {
       return request(app.getHttpServer())
         .post('/users')
-        .send({ name: 'Michael', balance: 1000 })
+        .send({
+          name: 'Michael',
+          balance: 1000,
+          email: 'michael@meandmichael.com',
+          password: 'password123',
+        })
         .expect(201)
         .expect((res) => {
           expect(res.body).toHaveProperty('id');
           expect(res.body.name).toBe('Michael');
           expect(res.body.balance).toBe(1000);
+          expect(res.body.email).toBe('michael@meandmichael.com');
+          expect(res.body.password).toBe('password123');
         });
     });
 
     it('should use default balance', () => {
       return request(app.getHttpServer())
         .post('/users')
-        .send({ name: 'Bob' })
+        .send({ name: 'Bob', email: 'bob@bob.com', password: 'password12345' })
         .expect(201)
         .expect((res) => {
           expect(res.body.balance).toBe(1000);
+          expect(res.body.email).toBe('bob@bob.com');
+          expect(res.body.password).toBe('password12345');
         });
     });
 
     it('should fail without name', () => {
       return request(app.getHttpServer())
         .post('/users')
-        .send({ balance: 500 })
+        .send({
+          balance: 500,
+          email: 'alice@alice.com',
+          password: 'password123',
+        })
         .expect(400);
     });
   });
