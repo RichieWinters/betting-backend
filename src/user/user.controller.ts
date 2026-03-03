@@ -6,6 +6,7 @@ import {
   UseGuards,
   Patch,
   Param,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -24,6 +25,16 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @Controller('users')
 export class UserController {
   constructor(private userService: UserService) {}
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiResponse({ status: 200, description: 'Returns current user info with balance' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getMe(@Request() req) {
+    return this.userService.getMyProfile(req.user.id);
+  }
 
   @Get()
   @ApiOperation({ summary: 'Get all users' })

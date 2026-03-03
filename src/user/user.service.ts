@@ -36,4 +36,20 @@ export class UserService {
       data: { isBanned: false },
     });
   }
+
+  async getMyProfile(userId: number) {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        balance: true,
+        role: true,
+        isBanned: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
 }
