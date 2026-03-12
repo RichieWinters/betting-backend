@@ -26,6 +26,7 @@ async function bootstrap() {
     .addTag('users', 'User management')
     .addTag('matches', 'Match management')
     .addTag('bets', 'Betting operations')
+    .addTag('reports', 'CSV Reports')
     .addBearerAuth()
     .build();
 

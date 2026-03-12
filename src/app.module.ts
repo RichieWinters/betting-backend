@@ -7,6 +7,7 @@ import { MatchModule } from './match/match.module';
 import { BetModule } from './bet/bet.module';
 import { AuthModule } from './auth/auth.module';
 import { EmailModule } from './email/email.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { EmailModule } from './email/email.module';
     BetModule,
     AuthModule,
     EmailModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
