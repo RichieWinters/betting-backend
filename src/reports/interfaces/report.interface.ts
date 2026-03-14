@@ -1,19 +1,3 @@
-export interface UserBetRow {
-  betId: number;
-  userId: number;
-  userName: string;
-  matchId: number;
-  teamA: string;
-  teamB: string;
-  betTeam: string;
-  amount: number;
-  betDate: string;
-  matchStatus: string;
-  winner: string | null;
-  result: string;
-  sportType: string;
-}
-
 export interface AggregatedStatsRow {
   monthStart: string;
   monthEnd: string;
