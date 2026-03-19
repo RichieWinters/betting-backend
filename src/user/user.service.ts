@@ -6,9 +6,19 @@ import { CreateUserDto } from './dto/create-user.dto';
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  // Get all users from database
   async findAll() {
-    return this.prisma.user.findMany();
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        balance: true,
+        role: true,
+        isBanned: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
   }
 
   // Create a new user

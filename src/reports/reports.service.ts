@@ -48,19 +48,19 @@ export class ReportsService {
     });
 
     const headers = [
-      'betId',
-      'userId',
-      'userName',
-      'matchId',
-      'teamA',
-      'teamB',
-      'betTeam',
-      'amount',
-      'betDate',
-      'matchStatus',
-      'winner',
-      'result',
-      'sportType',
+      'Bet ID',
+      'User ID',
+      'User Name',
+      'Match ID',
+      'Team A',
+      'Team B',
+      'Bet Team',
+      'Amount',
+      'Bet Date',
+      'Match Status',
+      'Winner',
+      'Result',
+      'Sport Type',
     ];
 
     return CsvGenerator.generate(headers, rows);
@@ -203,14 +203,14 @@ export class ReportsService {
     }
 
     const headers = [
-      'monthStart',
-      'monthEnd',
-      'sportType',
-      'totalBets',
-      'totalWinnings',
-      'totalLosses',
-      'betCount',
-      'playerCount',
+      'Month Start',
+      'Month End',
+      'Sport Type',
+      'Total Bets',
+      'Total Winnings',
+      'Total Losses',
+      'Bet Count',
+      'Player Count',
     ];
 
     return CsvGenerator.generate(headers, allRows);
