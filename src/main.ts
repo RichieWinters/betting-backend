@@ -3,11 +3,15 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.enableCors();
+
+  app.useStaticAssets(join(__dirname, '..', 'public'));
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -34,12 +38,5 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   await app.listen(process.env.PORT ?? 3000);
-
-  console.log(
-    `🚀 API running on: http://localhost:${process.env.PORT ?? 3000}`,
-  );
-  console.log(
-    `📚 Swagger docs: http://localhost:${process.env.PORT ?? 3000}/api`,
-  );
 }
 bootstrap();
