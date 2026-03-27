@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMatchDto } from './dto/create.match.dto';
 import { UpdateMatchDto } from './dto/update-match.dto';
@@ -8,7 +8,11 @@ export class MatchService {
   constructor(private prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.match.findMany();
+    return this.prisma.match.findMany({
+      where: {
+        status: { not: 'DELETED' },
+      },
+    });
   }
 
   async create(createMatchDto: CreateMatchDto) {
@@ -111,6 +115,51 @@ export class MatchService {
       }
 
       return match;
+    });
+  }
+
+  async delete(id: number) {
+    const match = await this.prisma.match.findUnique({
+      where: { id },
+    });
+
+    if (!match) {
+      throw new BadRequestException('Match not found');
+    }
+
+    if (match.status === 'COMPLETED') {
+      throw new BadRequestException('Cannot delete completed matches');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const deletedMatch = await tx.match.update({
+        where: { id },
+        data: { status: 'DELETED' },
+      });
+
+      const bets = await tx.bet.findMany({
+        where: { matchId: id },
+      });
+
+      for (const bet of bets) {
+        if (bet.result !== 'PENDING') {
+          continue;
+        }
+
+        await tx.bet.update({
+          where: { id: bet.id },
+          data: { result: 'CANCELLED', payout: bet.amount },
+        });
+
+        await tx.user.update({
+          where: { id: bet.userId },
+          data: {
+            balance: { increment: bet.amount },
+          },
+        });
+      }
+
+      return deletedMatch;
     });
   }
 }

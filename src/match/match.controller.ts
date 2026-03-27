@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -59,5 +60,18 @@ export class MatchController {
     @Body() updateMatchDto: UpdateMatchDto,
   ) {
     return this.matchService.update(+id, updateMatchDto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a match (soft delete with refunds)' })
+  @ApiParam({ name: 'id', description: 'Match ID' })
+  @ApiResponse({ status: 200, description: 'Match deleted successfully' })
+  @ApiResponse({ status: 400, description: 'Cannot delete completed matches' })
+  @ApiResponse({ status: 404, description: 'Match not found' })
+  async deleteMatch(@Param('id') id: string) {
+    return this.matchService.delete(+id);
   }
 }

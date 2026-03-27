@@ -3,6 +3,7 @@ enum Status {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+  DELETED
 }
 
 enum SportType {
