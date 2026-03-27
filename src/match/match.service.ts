@@ -27,12 +27,26 @@ export class MatchService {
   }
 
   async update(id: number, updateMatchDto: UpdateMatchDto) {
-    let matchStatus = updateMatchDto.status;
-    if (matchStatus === 'COMPLETED' && updateMatchDto.winner) {
-      return this.completeMatchWithPayouts(id, updateMatchDto);
+    const currentMatch = await this.prisma.match.findUnique({
+      where: { id },
+    });
+
+    if (!currentMatch) {
+      throw new BadRequestException('Match not found');
     }
 
-    if (matchStatus === 'CANCELLED') {
+    const finalStatus = updateMatchDto.status ?? currentMatch.status;
+    const finalWinner = updateMatchDto.winner ?? currentMatch.winner;
+
+    if (finalStatus === 'COMPLETED' && finalWinner) {
+      return this.completeMatchWithPayouts(id, {
+        ...updateMatchDto,
+        status: 'COMPLETED',
+        winner: finalWinner,
+      });
+    }
+
+    if (updateMatchDto.status === 'CANCELLED') {
       return this.cancelMatchWithRefunds(id);
     }
 
