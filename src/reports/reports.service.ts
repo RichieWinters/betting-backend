@@ -125,7 +125,7 @@ export class ReportsService {
 
       const result = this.calculateResult(bet);
       if (result === 'WIN') {
-        stats.totalWinnings += bet.amount * 2;
+        stats.totalWinnings += bet.payout || bet.amount * 1.9;
       } else if (result === 'LOSS') {
         stats.totalLosses += bet.amount;
       }
@@ -217,6 +217,10 @@ export class ReportsService {
   }
 
   private calculateResult(bet: Bet & { match: Match }): string {
+    if (bet.result) {
+      return bet.result;
+    }
+
     if (bet.match.status === Status.CANCELLED) {
       return 'CANCELLED';
     }
