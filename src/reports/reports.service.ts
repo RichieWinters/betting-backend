@@ -11,12 +11,16 @@ export class ReportsService {
   constructor(private prisma: PrismaService) {}
 
   async generateUserBetsReport(params: UserBetsReportDto): Promise<string> {
+    const startDate = new Date(params.startDate);
+    const endDate = new Date(params.endDate);
+    endDate.setHours(23, 59, 59, 999);
+
     const bets = await this.prisma.bet.findMany({
       where: {
         userId: params.userId,
         createdAt: {
-          gte: new Date(params.startDate),
-          lte: new Date(params.endDate),
+          gte: startDate,
+          lte: endDate,
         },
       },
       include: {
@@ -39,7 +43,7 @@ export class ReportsService {
         bet.match.teamB,
         bet.team,
         bet.amount,
-        bet.createdAt.toISOString(),
+        this.formatDateTime(bet.createdAt),
         bet.match.status,
         bet.match.winner || '',
         result,
@@ -69,11 +73,15 @@ export class ReportsService {
   async generateAggregatedStatsReport(
     params: AggregatedStatsReportDto,
   ): Promise<string> {
+    const startDate = new Date(params.startDate);
+    const endDate = new Date(params.endDate);
+    endDate.setHours(23, 59, 59, 999);
+
     const bets = await this.prisma.bet.findMany({
       where: {
         createdAt: {
-          gte: new Date(params.startDate),
-          lte: new Date(params.endDate),
+          gte: startDate,
+          lte: endDate,
         },
       },
       include: {
@@ -82,34 +90,17 @@ export class ReportsService {
       },
     });
 
-    const monthSportMap = new Map<string, Map<string, AggregatedStatsRow>>();
+    const sportMap = new Map<string, AggregatedStatsRow>();
+    const uniqueUsers = new Set<number>();
 
     for (const bet of bets) {
-      const betDate = new Date(bet.createdAt);
-      const monthStart = new Date(betDate.getFullYear(), betDate.getMonth(), 1);
-      const monthEnd = new Date(
-        betDate.getFullYear(),
-        betDate.getMonth() + 1,
-        0,
-        23,
-        59,
-        59,
-        999,
-      );
-
-      const monthKey = monthStart.toISOString().split('T')[0];
       const sportType = bet.match.sportType;
-
-      if (!monthSportMap.has(monthKey)) {
-        monthSportMap.set(monthKey, new Map());
-      }
-
-      const sportMap = monthSportMap.get(monthKey)!;
+      uniqueUsers.add(bet.userId);
 
       if (!sportMap.has(sportType)) {
         sportMap.set(sportType, {
-          monthStart: monthStart.toISOString(),
-          monthEnd: monthEnd.toISOString(),
+          monthStart: params.startDate,
+          monthEnd: params.endDate,
           sportType,
           totalBets: 0,
           totalWinnings: 0,
@@ -131,80 +122,56 @@ export class ReportsService {
       }
     }
 
-    for (const [monthKey, sportMap] of monthSportMap.entries()) {
-      const uniqueUsers = new Set<number>();
-
-      for (const bet of bets) {
-        const betDate = new Date(bet.createdAt);
-        const betMonthKey = new Date(
-          betDate.getFullYear(),
-          betDate.getMonth(),
-          1,
-        )
-          .toISOString()
-          .split('T')[0];
-
-        if (betMonthKey === monthKey) {
-          uniqueUsers.add(bet.userId);
-        }
-      }
-
-      for (const stats of sportMap.values()) {
-        stats.playerCount = uniqueUsers.size;
-      }
+    for (const stats of sportMap.values()) {
+      stats.playerCount = uniqueUsers.size;
     }
 
     const allRows: (string | number)[][] = [];
 
-    const sortedMonths = Array.from(monthSportMap.keys()).sort();
+    const sortedSports = Array.from(sportMap.values()).sort((a, b) =>
+      a.sportType.localeCompare(b.sportType),
+    );
 
-    for (const monthKey of sortedMonths) {
-      const sportMap = monthSportMap.get(monthKey)!;
-      const sortedSports = Array.from(sportMap.values()).sort((a, b) =>
-        a.sportType.localeCompare(b.sportType),
-      );
+    let totalBets = 0;
+    let totalWinnings = 0;
+    let totalLosses = 0;
+    let betCount = 0;
 
-      let monthTotalBets = 0;
-      let monthTotalWinnings = 0;
-      let monthTotalLosses = 0;
-      let monthBetCount = 0;
-      let monthPlayerCount = 0;
+    for (const stats of sortedSports) {
+      allRows.push([
+        this.formatMonthDate(stats.monthStart),
+        this.formatMonthDate(stats.monthEnd),
+        stats.sportType,
+        stats.totalBets.toFixed(2),
+        stats.totalWinnings.toFixed(2),
+        stats.totalLosses.toFixed(2),
+        stats.betCount,
+        stats.playerCount,
+      ]);
 
-      for (const stats of sortedSports) {
-        allRows.push([
-          stats.monthStart,
-          stats.monthEnd,
-          stats.sportType,
-          stats.totalBets.toFixed(2),
-          stats.totalWinnings.toFixed(2),
-          stats.totalLosses.toFixed(2),
-          stats.betCount,
-          stats.playerCount,
-        ]);
+      totalBets += stats.totalBets;
+      totalWinnings += stats.totalWinnings;
+      totalLosses += stats.totalLosses;
+      betCount += stats.betCount;
+    }
 
-        monthTotalBets += stats.totalBets;
-        monthTotalWinnings += stats.totalWinnings;
-        monthTotalLosses += stats.totalLosses;
-        monthBetCount += stats.betCount;
-        monthPlayerCount = stats.playerCount;
-      }
-
+    if (sortedSports.length > 0) {
       const firstStats = sortedSports[0];
       allRows.push([
-        firstStats.monthStart,
-        firstStats.monthEnd,
+        this.formatMonthDate(firstStats.monthStart),
+        this.formatMonthDate(firstStats.monthEnd),
         'ALL',
-        monthTotalBets.toFixed(2),
-        monthTotalWinnings.toFixed(2),
-        monthTotalLosses.toFixed(2),
-        monthBetCount,
-        monthPlayerCount,
+        totalBets.toFixed(2),
+        totalWinnings.toFixed(2),
+        totalLosses.toFixed(2),
+        betCount,
+        uniqueUsers.size,
       ]);
     }
 
     const headers = [
-      'Month Start',
-      'Month End',
+      'Period Start',
+      'Period End',
       'Sport Type',
       'Total Bets',
       'Total Winnings',
@@ -214,6 +181,24 @@ export class ReportsService {
     ];
 
     return CsvGenerator.generate(headers, allRows);
+  }
+
+  private formatMonthDate(dateString: string): string {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = date.toLocaleString('en-US', { month: 'short' });
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${month} ${day}, ${year}`;
+  }
+
+  private formatDateTime(date: Date): string {
+    const year = date.getFullYear();
+    const month = date.toLocaleString('en-US', { month: 'short' });
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${month} ${day}, ${year} ${hours}:${minutes}:${seconds}`;
   }
 
   private calculateResult(bet: Bet & { match: Match }): string {
