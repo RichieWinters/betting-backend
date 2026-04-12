@@ -3,6 +3,8 @@ import { Job } from 'bullmq';
 import { ReportsService } from './reports.service';
 import { ReportsGateway } from './reports.gateway';
 import { JobResult } from './interfaces/report.interface';
+import { UserBetsReportDto } from './dto/user-bets-report.dto';
+import { AggregatedStatsReportDto } from './dto/aggregated-stats-report.dto';
 
 @Processor('reports')
 export class ReportsProcessor extends WorkerHost {
@@ -19,9 +21,13 @@ export class ReportsProcessor extends WorkerHost {
     let csv: string;
 
     if (job.name === 'user-bets') {
-      csv = await this.reportsService.generateUserBetsReport(job.data);
+      csv = await this.reportsService.generateUserBetsReport(
+        job.data as UserBetsReportDto,
+      );
     } else if (job.name === 'aggregated-stats') {
-      csv = await this.reportsService.generateAggregatedStatsReport(job.data);
+      csv = await this.reportsService.generateAggregatedStatsReport(
+        job.data as AggregatedStatsReportDto,
+      );
     } else {
       throw new Error(`Unknown job type: ${job.name}`);
     }

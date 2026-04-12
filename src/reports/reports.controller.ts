@@ -89,12 +89,13 @@ export class ReportsController {
 
     const state = await job.getState();
     const progress = job.progress || 0;
+    const returnvalue = job.returnvalue as { filename?: string } | null;
 
     return {
       jobId: job.id,
       status: state,
       progress,
-      result: job.returnvalue,
+      result: returnvalue,
     };
   }
 
@@ -125,7 +126,10 @@ export class ReportsController {
       throw new BadRequestException(`Report not ready. Status: ${state}`);
     }
 
-    const { csv, filename } = job.returnvalue;
+    const { csv, filename } = job.returnvalue as {
+      csv: string;
+      filename: string;
+    };
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);

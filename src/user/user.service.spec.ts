@@ -4,7 +4,6 @@ import { PrismaService } from '../prisma/prisma.service';
 
 describe('UserService', () => {
   let service: UserService;
-  let prisma: PrismaService;
 
   const mockUsers = [
     {
@@ -46,7 +45,6 @@ describe('UserService', () => {
     }).compile();
 
     service = module.get<UserService>(UserService);
-    prisma = module.get<PrismaService>(PrismaService);
   });
 
   it('should be defined', () => {
@@ -63,7 +61,7 @@ describe('UserService', () => {
       };
       await service.create(createUserDto);
 
-      expect(prisma.user.create).toHaveBeenCalledWith({
+      expect(mockPrisma.user.create).toHaveBeenCalledWith({
         data: {
           name: 'Alice',
           balance: 500,
@@ -81,7 +79,7 @@ describe('UserService', () => {
       };
       await service.create(createUserDto);
 
-      expect(prisma.user.create).toHaveBeenCalledWith({
+      expect(mockPrisma.user.create).toHaveBeenCalledWith({
         data: {
           name: 'Bob',
           balance: 1000,
@@ -100,7 +98,7 @@ describe('UserService', () => {
       };
       await service.create(createUserDto);
 
-      expect(prisma.user.create).toHaveBeenCalledWith({
+      expect(mockPrisma.user.create).toHaveBeenCalledWith({
         data: {
           name: 'Charlie',
           balance: 1000,

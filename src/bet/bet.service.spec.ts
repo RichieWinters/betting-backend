@@ -5,7 +5,6 @@ import { PrismaService } from '../prisma/prisma.service';
 
 describe('BetService', () => {
   let service: BetService;
-  let prisma: any;
 
   const mockUser = {
     id: 1,
@@ -47,7 +46,6 @@ describe('BetService', () => {
     }).compile();
 
     service = module.get<BetService>(BetService);
-    prisma = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
   });
@@ -147,9 +145,11 @@ describe('BetService', () => {
         balance: 100,
       });
       mockPrisma.match.findUnique.mockResolvedValue(mockMatch);
-      mockPrisma.$transaction.mockImplementation(async (callback) => {
-        return callback(mockPrisma);
-      });
+      mockPrisma.$transaction.mockImplementation(
+        (callback: (prisma: typeof mockPrisma) => unknown) => {
+          return callback(mockPrisma);
+        },
+      );
       mockPrisma.bet.create.mockResolvedValue({
         id: 1,
         userId: 1,
@@ -173,9 +173,11 @@ describe('BetService', () => {
     beforeEach(() => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.match.findUnique.mockResolvedValue(mockMatch);
-      mockPrisma.$transaction.mockImplementation(async (callback) => {
-        return callback(mockPrisma);
-      });
+      mockPrisma.$transaction.mockImplementation(
+        (callback: (prisma: typeof mockPrisma) => unknown) => {
+          return callback(mockPrisma);
+        },
+      );
       mockPrisma.bet.create.mockResolvedValue({
         id: 1,
         userId: 1,

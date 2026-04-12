@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
+import { type Server } from 'http';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 
@@ -43,13 +44,16 @@ describe('Users (e2e)', () => {
 
   describe('/users (GET)', () => {
     it('should return empty array initially', () => {
-      return request(app.getHttpServer()).get('/users').expect(200).expect([]);
+      return request(app.getHttpServer() as Server)
+        .get('/users')
+        .expect(200)
+        .expect([]);
     });
   });
 
   describe('/users (POST)', () => {
     it('should create a new user', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as Server)
         .post('/users')
         .send({
           name: 'Michael',
@@ -59,28 +63,39 @@ describe('Users (e2e)', () => {
         })
         .expect(201)
         .expect((res) => {
+          const body = res.body as {
+            name: string;
+            balance: number;
+            email: string;
+            password: string;
+          };
           expect(res.body).toHaveProperty('id');
-          expect(res.body.name).toBe('Michael');
-          expect(res.body.balance).toBe(1000);
-          expect(res.body.email).toBe('michael@meandmichael.com');
-          expect(res.body.password).toBe('password123');
+          expect(body.name).toBe('Michael');
+          expect(body.balance).toBe(1000);
+          expect(body.email).toBe('michael@meandmichael.com');
+          expect(body.password).toBe('password123');
         });
     });
 
     it('should use default balance', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as Server)
         .post('/users')
         .send({ name: 'Bob', email: 'bob@bob.com', password: 'password12345' })
         .expect(201)
         .expect((res) => {
-          expect(res.body.balance).toBe(1000);
-          expect(res.body.email).toBe('bob@bob.com');
-          expect(res.body.password).toBe('password12345');
+          const body = res.body as {
+            balance: number;
+            email: string;
+            password: string;
+          };
+          expect(body.balance).toBe(1000);
+          expect(body.email).toBe('bob@bob.com');
+          expect(body.password).toBe('password12345');
         });
     });
 
     it('should fail without name', () => {
-      return request(app.getHttpServer())
+      return request(app.getHttpServer() as Server)
         .post('/users')
         .send({
           balance: 500,
@@ -93,13 +108,14 @@ describe('Users (e2e)', () => {
 
   describe('/users (GET) after creation', () => {
     it('should return all users', async () => {
-      const response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer() as Server)
         .get('/users')
         .expect(200);
 
-      expect(response.body).toHaveLength(2);
-      expect(response.body[0].name).toBe('Michael');
-      expect(response.body[1].name).toBe('Bob');
+      const body = response.body as { name: string }[];
+      expect(body).toHaveLength(2);
+      expect(body[0].name).toBe('Michael');
+      expect(body[1].name).toBe('Bob');
     });
   });
 });

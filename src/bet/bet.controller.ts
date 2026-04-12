@@ -42,7 +42,7 @@ export class BetController {
   @ApiOperation({ summary: 'Get user bets' })
   @ApiResponse({ status: 200, description: 'Returns current user bets' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getUserBets(@Request() req) {
+  async getUserBets(@Request() req: { user: { id: number } }) {
     return this.betService.findUserBets(req.user.id);
   }
 

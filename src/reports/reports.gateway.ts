@@ -26,7 +26,7 @@ export class ReportsGateway
 
   private logger = new Logger('ReportsGateway');
 
-  afterInit(server: Server) {
+  afterInit() {
     this.logger.log('WebSocket Gateway initialized');
   }
 
@@ -43,7 +43,7 @@ export class ReportsGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() jobId: string,
   ) {
-    client.join(`job:${jobId}`);
+    void client.join(`job:${jobId}`);
     return { success: true, message: `Subscribed to job ${jobId}` };
   }
 
@@ -52,7 +52,7 @@ export class ReportsGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() jobId: string,
   ) {
-    client.leave(`job:${jobId}`);
+    void client.leave(`job:${jobId}`);
     return { success: true, message: `Unsubscribed from job ${jobId}` };
   }
 

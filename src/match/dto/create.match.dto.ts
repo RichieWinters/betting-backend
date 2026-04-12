@@ -3,7 +3,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { SportType } from '@prisma/client';
 
 export class CreateMatchDto {
-  @ApiProperty({ description: 'Match date and time', example: '2026-03-15T20:00:00Z' })
+  @ApiProperty({
+    description: 'Match date and time',
+    example: '2026-03-15T20:00:00Z',
+  })
   @IsDateString()
   date: string;
 

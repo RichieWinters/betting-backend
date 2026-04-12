@@ -17,7 +17,10 @@ export class CreateBetDto {
   @IsPositive()
   amount: number;
 
-  @ApiProperty({ description: 'Team to bet on (must match teamA or teamB)', example: 'NaVi' })
+  @ApiProperty({
+    description: 'Team to bet on (must match teamA or teamB)',
+    example: 'NaVi',
+  })
   @IsString()
   team: string;
 }

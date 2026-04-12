@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
+import { type Server } from 'http';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 
@@ -44,7 +45,7 @@ describe('Betting Flow (e2e)', () => {
   });
 
   it('should create a user', async () => {
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as Server)
       .post('/users')
       .send({
         name: 'Gambler',
@@ -54,12 +55,13 @@ describe('Betting Flow (e2e)', () => {
       })
       .expect(201);
 
-    userId = response.body.id;
-    expect(response.body.balance).toBe(1000);
+    const body = response.body as { id: number; balance: number };
+    userId = body.id;
+    expect(body.balance).toBe(1000);
   });
 
   it('should create a match', async () => {
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as Server)
       .post('/matches')
       .send({
         date: '2026-03-15T20:00:00Z',
@@ -69,12 +71,13 @@ describe('Betting Flow (e2e)', () => {
       })
       .expect(201);
 
-    matchId = response.body.id;
-    expect(response.body.status).toBe('PENDING');
+    const body = response.body as { id: number; status: string };
+    matchId = body.id;
+    expect(body.status).toBe('PENDING');
   });
 
   it('should place a bet successfully', async () => {
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as Server)
       .post('/bets')
       .send({
         userId,
@@ -84,13 +87,18 @@ describe('Betting Flow (e2e)', () => {
       })
       .expect(201);
 
-    expect(response.body.amount).toBe(200);
-    expect(response.body.team).toBe('NaVi');
-    expect(response.body.user.balance).toBe(800); // 1000 - 200
+    const body = response.body as {
+      amount: number;
+      team: string;
+      user: { balance: number };
+    };
+    expect(body.amount).toBe(200);
+    expect(body.team).toBe('NaVi');
+    expect(body.user.balance).toBe(800); // 1000 - 200
   });
 
   it('should fail to bet with insufficient balance', async () => {
-    return request(app.getHttpServer())
+    return request(app.getHttpServer() as Server)
       .post('/bets')
       .send({
         userId,
@@ -100,12 +108,14 @@ describe('Betting Flow (e2e)', () => {
       })
       .expect(400)
       .expect((res) => {
-        expect(res.body.message).toContain('Insufficient balance');
+        expect((res.body as { message: string }).message).toContain(
+          'Insufficient balance',
+        );
       });
   });
 
   it('should fail to bet on wrong team', async () => {
-    return request(app.getHttpServer())
+    return request(app.getHttpServer() as Server)
       .post('/bets')
       .send({
         userId,
@@ -115,21 +125,23 @@ describe('Betting Flow (e2e)', () => {
       })
       .expect(400)
       .expect((res) => {
-        expect(res.body.message).toContain('must be either');
+        expect((res.body as { message: string }).message).toContain(
+          'must be either',
+        );
       });
   });
 
   it('should update match status', async () => {
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as Server)
       .patch(`/matches/${matchId}`)
       .send({ status: 'IN_PROGRESS' })
       .expect(200);
 
-    expect(response.body.status).toBe('IN_PROGRESS');
+    expect((response.body as { status: string }).status).toBe('IN_PROGRESS');
   });
 
   it('should fail to bet on non-pending match', async () => {
-    return request(app.getHttpServer())
+    return request(app.getHttpServer() as Server)
       .post('/bets')
       .send({
         userId,
@@ -139,12 +151,12 @@ describe('Betting Flow (e2e)', () => {
       })
       .expect(400)
       .expect((res) => {
-        expect(res.body.message).toContain('pending');
+        expect((res.body as { message: string }).message).toContain('pending');
       });
   });
 
   it('should complete match with winner', async () => {
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as Server)
       .patch(`/matches/${matchId}`)
       .send({
         status: 'COMPLETED',
@@ -152,16 +164,18 @@ describe('Betting Flow (e2e)', () => {
       })
       .expect(200);
 
-    expect(response.body.status).toBe('COMPLETED');
-    expect(response.body.winner).toBe('NaVi');
+    const body = response.body as { status: string; winner: string };
+    expect(body.status).toBe('COMPLETED');
+    expect(body.winner).toBe('NaVi');
   });
 
   it('should get all bets', async () => {
-    const response = await request(app.getHttpServer())
+    const response = await request(app.getHttpServer() as Server)
       .get('/bets')
       .expect(200);
 
-    expect(response.body).toHaveLength(1);
-    expect(response.body[0].amount).toBe(200);
+    const body = response.body as { amount: number }[];
+    expect(body).toHaveLength(1);
+    expect(body[0].amount).toBe(200);
   });
 });

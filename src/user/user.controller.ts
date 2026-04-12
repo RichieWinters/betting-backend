@@ -30,9 +30,12 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, description: 'Returns current user info with balance' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns current user info with balance',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getMe(@Request() req) {
+  async getMe(@Request() req: { user: { id: number } }) {
     return this.userService.getMyProfile(req.user.id);
   }
 
