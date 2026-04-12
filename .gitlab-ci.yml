@@ -1,0 +1,92 @@
+# GitLab CI/CD — betting-backend (NestJS / Prisma)
+#
+# Required CI/CD variables (Settings → CI/CD → Variables):
+#   SSH_PRIVATE_KEY  type: File, protected — CI deploy private key
+#   DEPLOY_HOST      type: Variable        — Droplet IP or hostname
+#   DEPLOY_USER      type: Variable        — deploy user (dev)
+#
+# Server .env is managed by Ansible; this pipeline never touches it.
+
+stages:
+  - lint
+  - test
+  - build
+  - deploy
+
+default:
+  # bookworm-slim (glibc) avoids Prisma binary issues on alpine (musl).
+  image: node:22-bookworm-slim
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+
+lint:
+  stage: lint
+  before_script:
+    - npm ci
+  script:
+    # No --fix: bad code must fail the pipeline, not be silently patched.
+    - npx eslint "{src,apps,libs,test}/**/*.ts"
+
+test:
+  stage: test
+  before_script:
+    - npm ci
+    - npx prisma generate
+  script:
+    - npm test
+
+build:
+  stage: build
+  before_script:
+    - npm ci
+    - npx prisma generate
+  script:
+    - npx nest build
+  artifacts:
+    paths:
+      - dist/
+      - package.json
+      - package-lock.json
+      - prisma/
+    expire_in: 1 day
+
+deploy:
+  stage: deploy
+  image: alpine:latest
+  cache: []  # deploy runs on alpine with no Node — skip node_modules cache
+  dependencies:
+    - build
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  before_script:
+    - apk add --no-cache openssh-client rsync
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - cp "$SSH_PRIVATE_KEY" ~/.ssh/id_ci
+    - chmod 600 ~/.ssh/id_ci
+    - ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+  script:
+    - mkdir -p _deploy
+    - cp -r dist prisma _deploy/
+    - cp package.json package-lock.json ecosystem.config.cjs _deploy/
+    - |
+      rsync -az --delete \
+        --exclude='.env' \
+        --exclude='node_modules/' \
+        -e "ssh -i ~/.ssh/id_ci" \
+        _deploy/ \
+        "$DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/backend/"
+    - |
+      ssh -i ~/.ssh/id_ci "$DEPLOY_USER@$DEPLOY_HOST" bash -l << 'ENDSSH'
+      set -e
+      export NVM_DIR="$HOME/.nvm"
+      [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+      cd ~/backend
+      npm ci
+      npx prisma generate
+      npx prisma migrate deploy
+      pm2 reload ecosystem.config.cjs --update-env || pm2 start ecosystem.config.cjs
+      ENDSSH
