@@ -52,12 +52,16 @@ build:
       - package.json
       - package-lock.json
       - prisma/
+      - node_modules/.prisma/
+      - node_modules/@prisma/client/
+      - node_modules/prisma/
+      - node_modules/.bin/prisma
     expire_in: 1 day
 
 deploy:
   stage: deploy
   image: alpine:latest
-  cache: []  # deploy runs on alpine with no Node — skip node_modules cache
+  cache: [] # deploy runs on alpine with no Node — skip node_modules cache
   dependencies:
     - build
   rules:
@@ -70,23 +74,22 @@ deploy:
     - ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
   script:
     - mkdir -p _deploy
-    - cp -r dist prisma _deploy/
+    - cp -r dist prisma node_modules _deploy/
     - cp package.json package-lock.json ecosystem.config.cjs _deploy/
     - |
       rsync -az --delete \
         --exclude='.env' \
-        --exclude='node_modules/' \
         -e "ssh -i ~/.ssh/id_ci" \
         _deploy/ \
         "$DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/backend/"
     - |
-      ssh -i ~/.ssh/id_ci "$DEPLOY_USER@$DEPLOY_HOST" bash -l << 'ENDSSH'
+      ssh -i ~/.ssh/id_ci "$DEPLOY_USER@$DEPLOY_HOST" 'bash -l -s' << 'ENDSSH'
       set -e
       export NVM_DIR="$HOME/.nvm"
       [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
       cd ~/backend
-      npm ci
-      npx prisma generate
-      npx prisma migrate deploy
+      set -a && source .env && set +a
+      npm ci --omit=dev --prefer-offline
+      node_modules/.bin/prisma migrate deploy
       pm2 reload ecosystem.config.cjs --update-env || pm2 start ecosystem.config.cjs
       ENDSSH
