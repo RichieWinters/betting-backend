@@ -75,7 +75,7 @@ deploy:
   script:
     - mkdir -p _deploy
     - cp -r dist prisma node_modules _deploy/
-    - cp package.json package-lock.json ecosystem.config.cjs _deploy/
+    - cp package.json package-lock.json ecosystem.config.cjs prisma.config.ts _deploy/
     - |
       rsync -az --delete \
         --exclude='.env' \
@@ -88,8 +88,16 @@ deploy:
       export NVM_DIR="$HOME/.nvm"
       [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
       cd ~/backend
+      echo "=== DEBUG ==="
+      echo "CWD: $(pwd)"
+      echo "node: $(node --version)"
+      echo ".env exists: $(test -f .env && echo YES || echo NO)"
+      echo "DATABASE_URL before source: ${DATABASE_URL:+SET (${#DATABASE_URL} chars)}"
       set -a && source .env && set +a
+      echo "DATABASE_URL after source: ${DATABASE_URL:+SET (${#DATABASE_URL} chars)}"
+      echo "=== END DEBUG ==="
       npm ci --omit=dev --prefer-offline
+      echo "dotenv check: $(node -e "require('dotenv/config'); console.log(process.env.DATABASE_URL ? 'SET (' + process.env.DATABASE_URL.length + ' chars)' : 'MISSING')")"
       node_modules/.bin/prisma migrate deploy
       pm2 reload ecosystem.config.cjs --update-env || pm2 start ecosystem.config.cjs
       ENDSSH
