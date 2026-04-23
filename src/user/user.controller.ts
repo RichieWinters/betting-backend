@@ -17,6 +17,7 @@ import {
 } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { ReplenishDto } from './dto/replenish.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -25,6 +26,22 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @Controller('users')
 export class UserController {
   constructor(private userService: UserService) {}
+
+  @Post('replenish')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Add funds to current user balance' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns updated user with new balance',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async replenish(
+    @Request() req: { user: { id: number } },
+    @Body() replenishDto: ReplenishDto,
+  ) {
+    return this.userService.replenish(req.user.id, replenishDto.amount);
+  }
 
   @Get('me')
   @UseGuards(JwtAuthGuard)

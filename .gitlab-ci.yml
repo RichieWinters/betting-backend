@@ -46,16 +46,14 @@ build:
     - npx prisma generate
   script:
     - npx nest build
+    - npm prune --omit=dev
   artifacts:
     paths:
       - dist/
       - package.json
       - package-lock.json
       - prisma/
-      - node_modules/.prisma/
-      - node_modules/@prisma/client/
-      - node_modules/prisma/
-      - node_modules/.bin/prisma
+      - node_modules/
     expire_in: 1 day
 
 deploy:
@@ -89,7 +87,6 @@ deploy:
       [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
       cd ~/backend
       set -a && source .env && set +a
-      npm ci --omit=dev --prefer-offline
       node_modules/.bin/prisma migrate deploy
       echo "dist/main.js exists: $(test -f dist/main.js && echo YES || echo NO)"
       pm2 reload ecosystem.config.cjs --update-env || pm2 start ecosystem.config.cjs

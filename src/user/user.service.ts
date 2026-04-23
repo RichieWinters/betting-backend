@@ -47,6 +47,23 @@ export class UserService {
     });
   }
 
+  async replenish(userId: number, amount: number) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { balance: { increment: amount } },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        balance: true,
+        role: true,
+        isBanned: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
   async getMyProfile(userId: number) {
     return this.prisma.user.findUnique({
       where: { id: userId },
