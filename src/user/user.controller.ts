@@ -7,6 +7,7 @@ import {
   Patch,
   Param,
   Request,
+  HttpCode,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -28,6 +29,7 @@ export class UserController {
   constructor(private userService: UserService) {}
 
   @Post('replenish')
+  @HttpCode(200)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Add funds to current user balance' })
